@@ -1,0 +1,36 @@
+version: "3"
+services:
+  doable2-app:
+    image: dpoz/doable2:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # args:
+        # READY_BUILD: build
+        # todo: build inside container?
+    networks:
+      - doable2-tier
+    expose:
+      - 4000
+
+  sslproxy:
+    image: danieldent/nginx-ssl-proxy
+    container_name: doable2-ssl-proxy
+    restart: always
+    networks:
+      - doable2-tier
+    depends_on:
+      - doable2-app
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+    environment:
+      UPSTREAM: doable2-app:4000
+      SERVERNAME: localhost
+      # EXTRANAMES: www.test.example.com,test2.example.com
+
+networks:
+  doable2-tier:
+    driver: bridge
